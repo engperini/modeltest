@@ -1,0 +1,2 @@
+# modeltest
+Ollama model test
