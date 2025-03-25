@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ollama Playground</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        input, select, textarea, button {
+            width: 80%;
+            margin-bottom: 10px;
+            padding: 10px;
+        }
+        #response {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            width: 80%;
+            display: inline-block;
+            text-align: left;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h2>Ollama Playground</h2>
+
+    <p>Digite o endereço do Ollama (exemplo: <b>engperini.ddns.net:11434</b>)</p>
+    <input type="text" id="ollamaAddress" placeholder="ex: engperini.ddns.net:11434">
+    <button onclick="saveAddress()">Salvar</button>
+    <p id="status"></p>
+
+    <div id="playground" style="display:none;">
+        <p>Escolha um template ou escreva um prompt personalizado.</p>
+        <select id="templateSelect" onchange="setPrompt()">
+            <option value="">Selecione um exemplo...</option>
+            <option value="Explique a teoria da relatividade em termos simples.">Teoria da Relatividade</option>
+            <option value="Liste os principais benefícios da energia solar.">Energia Solar</option>
+            <option value="Escreva um poema curto sobre a lua.">Poema sobre a Lua</option>
+            <option value="Diga três curiosidades sobre inteligência artificial.">Curiosidades sobre IA</option>
+            <option value="Traduza 'Olá, como vai você?' para francês e espanhol.">Tradução</option>
+            <option value="Gere uma lista de 5 ideias para um aplicativo inovador.">Ideias de Aplicativos</option>
+        </select>
+
+        <textarea id="prompt" placeholder="Ou digite seu próprio prompt..."></textarea><br>
+        <button onclick="sendPrompt()">Enviar</button>
+        <div id="response"></div>
+    </div>
+
+    <script>
+        function saveAddress() {
+            const address = document.getElementById("ollamaAddress").value.trim();
+            if (!address) {
+                alert("Por favor, insira um endereço válido.");
+                return;
+            }
+            sessionStorage.setItem("ollamaAddress", address);
+            document.getElementById("status").innerText = "Endereço salvo: " + address;
+            document.getElementById("playground").style.display = "block";
+        }
+
+        function setPrompt() {
+            const selectedPrompt = document.getElementById("templateSelect").value;
+            document.getElementById("prompt").value = selectedPrompt;
+        }
+
+        async function sendPrompt() {
+            const address = sessionStorage.getItem("ollamaAddress");
+            if (!address) {
+                alert("Por favor, insira o endereço do Ollama primeiro.");
+                return;
+            }
+
+            const prompt = document.getElementById("prompt").value;
+            const responseDiv = document.getElementById("response");
+            responseDiv.innerHTML = "Carregando...";
+
+            try {
+                const response = await fetch(`http://${address}/api/generate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        model: "llama3",  // Substitua pelo modelo em uso
+                        prompt: prompt,
+                        stream: false
+                    })
+                });
+
+                const data = await response.json();
+                responseDiv.innerHTML = data.response || "Erro ao obter resposta.";
+
+            } catch (error) {
+                responseDiv.innerHTML = "Erro ao conectar ao servidor.";
+                console.error(error);
+            }
+        }
+
+        // Se já houver um endereço salvo, mostrar o playground diretamente
+        const savedAddress = sessionStorage.getItem("ollamaAddress");
+        if (savedAddress) {
+            document.getElementById("status").innerText = "Endereço salvo: " + savedAddress;
+            document.getElementById("playground").style.display = "block";
+        }
+    </script>
+</body>
+</html>
